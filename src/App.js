@@ -1,8 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import Login from './Login';
+import Register from './Register';
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authMode, setAuthMode] = useState('login');
   const [activeSection, setActiveSection] = useState('home');
+  const [helpRequests, setHelpRequests] = useState([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    description: ''
+  });
+
   const [resources] = useState([
     { id: 1, title: 'Guia de Comunicação', description: 'Técnicas para melhorar a comunicação com pessoas autistas', icon: '💬' },
     { id: 2, title: 'Atividades Sensoriais', description: 'Exercícios para desenvolvimento sensorial', icon: '🎨' },
@@ -10,24 +23,124 @@ function App() {
   ]);
 
   const [contacts] = useState([
-    { name: 'Centro de Apoio Autismo', phone: '(11) 1234-5678', email: 'contato@apoioautismo.org', icon: '🏥' },
-    { name: 'Associação Família Azul', phone: '(11) 8765-4321', email: 'ajuda@familiaazul.org', icon: '👨‍👩‍👧‍👦' }
+    { name: 'Terapia de Autismo em Alphaville', phone: '(11) 4193-3175', local: 'Av. Sagitário 138, Barueri, SP', icon: '🏥' },
+    { name: 'Centro TEA Paulista', phone: '(11) 3116-7406', local: 'Rua Galileo Emendabili, 99 – São Paulo, SP', icon: '👨👩👧👦' }
   ]);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchHelpRequests();
+    }
+  }, [isLoggedIn]);
+
+  const fetchHelpRequests = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/help/requests');
+      if (response.ok) {
+        const data = await response.json();
+        setHelpRequests(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar solicitações:', error);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:8080/api/help/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (response.ok) {
+        alert('Solicitação enviada com sucesso!');
+        setFormData({ name: '', email: '', phone: '', description: '' });
+        fetchHelpRequests();
+      } else {
+        alert('Erro ao enviar solicitação');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao conectar com o servidor');
+    }
+  };
+
+  const handleLogin = (userData) => {
+    setCurrentUser(userData);
+    setIsLoggedIn(true);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+  };
+
+  const handleRegister = (userData) => {
+    setCurrentUser(userData);
+    setIsLoggedIn(true);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    setActiveSection('home');
+    localStorage.removeItem('currentUser');
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div>
+        <header className="header">
+          <h1>🌟 Sistema de Suporte para Famílias</h1>
+          <p>Apoio especializado para pessoas com autismo e suas famílias</p>
+        </header>
+        
+        {authMode === 'login' ? (
+          <Login 
+            onLogin={handleLogin}
+            onSwitchToRegister={() => setAuthMode('register')}
+          />
+        ) : (
+          <Register 
+            onRegister={handleRegister}
+            onSwitchToLogin={() => setAuthMode('login')}
+          />
+        )}
+      </div>
+    );
+  }
 
   const renderHome = () => (
     <div>
       <div className="hero-section">
         <div className="hero-image">🤝</div>
         <div className="card">
-          <h2>Bem-vindos ao Sistema de Suporte</h2>
-          <p>Oferecemos recursos e apoio especializado para famílias com pessoas autistas. Nossa missão é proporcionar um ambiente acolhedor e informativo.</p>
+          <h2>Sistema de Suporte para Famílias com Pessoas Autistas</h2>
+          <p>Oferecemos recursos e apoio especializado para famílias. Nossa missão é proporcionar um ambiente acolhedor e informativo.</p>
         </div>
       </div>
       <div className="grid">
         <div className="card">
           <div className="card-icon">📚</div>
           <h3>Recursos Educativos</h3>
-          <p>Materiais e guias especializados para apoiar o desenvolvimento e aprendizado.</p>
+          <p>Materiais e guias especializados para apoiar o desenvolvimento.</p>
           <button className="btn" onClick={() => setActiveSection('resources')}>
             Ver Recursos
           </button>
@@ -35,7 +148,7 @@ function App() {
         <div className="card">
           <div className="card-icon">📞</div>
           <h3>Contatos de Apoio</h3>
-          <p>Profissionais e organizações especializadas prontos para ajudar.</p>
+          <p>Profissionais e organizações especializadas.</p>
           <button className="btn" onClick={() => setActiveSection('contacts')}>
             Ver Contatos
           </button>
@@ -43,7 +156,7 @@ function App() {
         <div className="card">
           <div className="card-icon">🆘</div>
           <h3>Solicitar Ajuda</h3>
-          <p>Entre em contato conosco para suporte personalizado e orientação.</p>
+          <p>Entre em contato para suporte personalizado.</p>
           <button className="btn" onClick={() => setActiveSection('help')}>
             Pedir Ajuda
           </button>
@@ -56,7 +169,7 @@ function App() {
     <div className="card">
       <div className="card-icon">📖</div>
       <h2>Recursos Educativos</h2>
-      <p>Materiais cuidadosamente selecionados para apoiar famílias e cuidadores.</p>
+      <p>Materiais selecionados para apoiar famílias e cuidadores.</p>
       <div style={{ marginTop: '20px' }}>
         {resources.map(resource => (
           <div key={resource.id} className="resource-item">
@@ -84,7 +197,7 @@ function App() {
               <h3>{contact.name}</h3>
             </div>
             <p><strong>📞 Telefone:</strong> {contact.phone}</p>
-            <p><strong>✉️ Email:</strong> {contact.email}</p>
+            <p><strong>📍 Local:</strong> {contact.local}</p>
           </div>
         ))}
       </div>
@@ -95,26 +208,69 @@ function App() {
     <div className="card">
       <div className="card-icon">📝</div>
       <h2>Solicitar Ajuda</h2>
-      <p>Preencha o formulário abaixo e nossa equipe entrará em contato.</p>
-      <form style={{ marginTop: '20px' }}>
+      <p>Preencha o formulário e nossa equipe entrará em contato.</p>
+      <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
         <div className="form-group">
           <label>👤 Nome Completo:</label>
-          <input type="text" required placeholder="Digite seu nome completo" />
+          <input 
+            type="text" 
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required 
+            placeholder="Digite seu nome completo" 
+          />
         </div>
         <div className="form-group">
           <label>📧 Email:</label>
-          <input type="email" required placeholder="seu.email@exemplo.com" />
+          <input 
+            type="email" 
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            required 
+            placeholder="seu.email@exemplo.com" 
+          />
         </div>
         <div className="form-group">
           <label>📱 Telefone:</label>
-          <input type="tel" placeholder="(11) 99999-9999" />
+          <input 
+            type="tel" 
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+            placeholder="(11) 99999-9999" 
+          />
         </div>
         <div className="form-group">
           <label>📋 Descrição da necessidade:</label>
-          <textarea rows="4" required placeholder="Descreva como podemos ajudar você e sua família..."></textarea>
+          <textarea 
+            rows="4" 
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            required 
+            placeholder="Descreva como podemos ajudar..."
+          ></textarea>
         </div>
         <button type="submit" className="btn">✉️ Enviar Solicitação</button>
       </form>
+      
+      {helpRequests.length > 0 && (
+        <div style={{ marginTop: '30px' }}>
+          <h3>Solicitações Recentes ({helpRequests.length})</h3>
+          <div style={{ maxHeight: '300px', overflowY: 'auto', marginTop: '15px' }}>
+            {helpRequests.slice(-5).reverse().map(request => (
+              <div key={request.id} className="resource-item" style={{ marginBottom: '10px' }}>
+                <strong>{request.name}</strong> - {request.email}
+                <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                  {request.description.substring(0, 100)}...
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -123,6 +279,16 @@ function App() {
       <header className="header">
         <h1>🌟 Sistema de Suporte para Famílias</h1>
         <p>Apoio especializado para pessoas com autismo e suas famílias</p>
+        <div style={{ marginTop: '15px' }}>
+          <span>Olá, {currentUser?.name}! </span>
+          <button 
+            className="btn nav-btn" 
+            onClick={handleLogout}
+            style={{ marginLeft: '10px' }}
+          >
+            🚪 Sair
+          </button>
+        </div>
       </header>
       
       <div className="container">
