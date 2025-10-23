@@ -1,0 +1,4 @@
+/workspaces/jpa.tcc/backend/src/main/java/com/autismsupport/AutismSupportApplication.java
+/workspaces/jpa.tcc/backend/src/main/java/com/autismsupport/controller/HelpController.java
+/workspaces/jpa.tcc/backend/src/main/java/com/autismsupport/repository/HelpRequestRepository.java
+/workspaces/jpa.tcc/backend/src/main/java/com/autismsupport/model/HelpRequest.java

@@ -23,19 +23,18 @@ function Register({ onRegister, onSwitchToLogin }) {
       return;
     }
 
-    // Verificar se email já existe
     const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     if (users.find(u => u.email === formData.email)) {
       alert('Email já cadastrado');
       return;
     }
 
-    // Salvar usuário
     const newUser = {
       id: Date.now(),
       name: formData.name,
       email: formData.email,
-      password: formData.password
+      password: formData.password,
+      active: true
     };
     
     users.push(newUser);

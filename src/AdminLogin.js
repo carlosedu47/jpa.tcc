@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
-function Login({ onLogin, onSwitchToRegister }) {
+function AdminLogin({ onAdminLogin, onSwitchToUser }) {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
 
@@ -16,31 +16,33 @@ function Login({ onLogin, onSwitchToRegister }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    const user = users.find(u => u.email === formData.email && u.password === formData.password);
-    
-    if (user) {
-      onLogin(user);
+    if (formData.username === 'admin' && formData.password === 'admin123') {
+      onAdminLogin({
+        id: 'admin',
+        name: 'Administrador',
+        email: 'admin@sistema.com',
+        isAdmin: true
+      });
     } else {
-      alert('Email ou senha incorretos');
+      alert('Credenciais de administrador incorretas');
     }
   };
 
   return (
     <div className="container">
       <div className="card" style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <div className="card-icon">🔐</div>
-        <h2>Login</h2>
+        <div className="card-icon">👨💼</div>
+        <h2>Login Administrador</h2>
         <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
           <div className="form-group">
-            <label>📧 Email:</label>
+            <label>👤 Usuário:</label>
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              name="username"
+              value={formData.username}
               onChange={handleInputChange}
               required
-              placeholder="seu.email@exemplo.com"
+              placeholder="admin"
             />
           </div>
           <div className="form-group">
@@ -51,16 +53,15 @@ function Login({ onLogin, onSwitchToRegister }) {
               value={formData.password}
               onChange={handleInputChange}
               required
-              placeholder="Digite sua senha"
+              placeholder="Digite a senha"
             />
           </div>
-          <button type="submit" className="btn">🚪 Entrar</button>
+          <button type="submit" className="btn">🔐 Entrar como Admin</button>
         </form>
         
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <p>Não tem conta?</p>
-          <button className="btn nav-btn" onClick={onSwitchToRegister}>
-            📝 Criar Conta
+          <button className="btn nav-btn" onClick={onSwitchToUser}>
+            👤 Login de Usuário
           </button>
         </div>
       </div>
@@ -68,4 +69,4 @@ function Login({ onLogin, onSwitchToRegister }) {
   );
 }
 
-export default Login;
+export default AdminLogin;

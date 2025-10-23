@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Login from './Login';
 import Register from './Register';
+import AdminLogin from './AdminLogin';
+import AdminPanel from './AdminPanel';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [activeSection, setActiveSection] = useState('home');
   const [helpRequests, setHelpRequests] = useState([]);
@@ -17,9 +20,9 @@ function App() {
   });
 
   const [resources] = useState([
-    { id: 1, title: 'Guia de Comunicação', description: 'Técnicas para melhorar a comunicação com pessoas autistas', icon: '💬' },
-    { id: 2, title: 'Atividades Sensoriais', description: 'Exercícios para desenvolvimento sensorial', icon: '🎨' },
-    { id: 3, title: 'Rotinas Diárias', description: 'Como estabelecer rotinas eficazes', icon: '📅' }
+    { id: 1, title: 'Guia de Comunicação', description: 'Técnicas para melhorar a comunicação com pessoas autistas', icon: '💬', link: 'https://ama.org.br/site/wp-content/uploads/2024/09/dw_livro_Autismo-Guia-Pratico-9-Edicao.pdf' },
+    { id: 2, title: 'Atividades Sensoriais', description: 'Exercícios para desenvolvimento sensorial', icon: '🎨', link: 'https://infanciadivergente.com/autismo/10-brincadeiras-sensoriais-para-criancas-autistas-com-passo-a-passo/' },
+    { id: 3, title: 'Rotinas Diárias', description: 'Como estabelecer rotinas eficazes', icon: '📅', link: 'https://caminhoautista.com/2024/11/24/autismo-e-rotina-como-criar-uma-estrutura-simples-que-ajuda-a-todos-a-prosperar/' }
   ]);
 
   const [contacts] = useState([
@@ -33,6 +36,9 @@ function App() {
       const user = JSON.parse(savedUser);
       setCurrentUser(user);
       setIsLoggedIn(true);
+      if (user.isAdmin) {
+        setIsAdmin(true);
+      }
     }
   }, []);
 
@@ -81,25 +87,43 @@ function App() {
       }
     } catch (error) {
       console.error('Erro:', error);
-      alert('Erro ao conectar com o servidor');
+      alert('Backend não está rodando. Execute: ./start.sh');
     }
   };
 
   const handleLogin = (userData) => {
+    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    const user = users.find(u => u.email === userData.email);
+    
+    if (user && user.active === false) {
+      alert('Usuário inativo. Entre em contato com o administrador.');
+      return;
+    }
+    
     setCurrentUser(userData);
     setIsLoggedIn(true);
     localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
   const handleRegister = (userData) => {
+    userData.active = true;
+    
     setCurrentUser(userData);
     setIsLoggedIn(true);
     localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
+  const handleAdminLogin = (adminData) => {
+    setCurrentUser(adminData);
+    setIsLoggedIn(true);
+    setIsAdmin(true);
+    localStorage.setItem('currentUser', JSON.stringify(adminData));
+  };
+
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
+    setIsAdmin(false);
     setActiveSection('home');
     localStorage.removeItem('currentUser');
   };
@@ -110,9 +134,22 @@ function App() {
         <header className="header">
           <h1>🌟 Sistema de Suporte para Famílias</h1>
           <p>Apoio especializado para pessoas com autismo e suas famílias</p>
+          <div style={{ marginTop: '15px' }}>
+            <button 
+              className="btn nav-btn" 
+              onClick={() => setAuthMode(authMode === 'admin' ? 'login' : 'admin')}
+            >
+              {authMode === 'admin' ? '👤 Login Usuário' : '👨💼 Login Admin'}
+            </button>
+          </div>
         </header>
         
-        {authMode === 'login' ? (
+        {authMode === 'admin' ? (
+          <AdminLogin 
+            onAdminLogin={handleAdminLogin}
+            onSwitchToUser={() => setAuthMode('login')}
+          />
+        ) : authMode === 'login' ? (
           <Login 
             onLogin={handleLogin}
             onSwitchToRegister={() => setAuthMode('register')}
@@ -125,6 +162,10 @@ function App() {
         )}
       </div>
     );
+  }
+
+  if (isAdmin) {
+    return <AdminPanel onLogout={handleLogout} />;
   }
 
   const renderHome = () => (
@@ -178,6 +219,15 @@ function App() {
               <h3>{resource.title}</h3>
             </div>
             <p>{resource.description}</p>
+            <a 
+              href={resource.link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="btn"
+              style={{ marginTop: '10px', display: 'inline-block', textDecoration: 'none' }}
+            >
+              🔗 Ver Mais
+            </a>
           </div>
         ))}
       </div>
